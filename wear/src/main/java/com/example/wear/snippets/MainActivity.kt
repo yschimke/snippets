@@ -25,10 +25,7 @@ import com.google.android.horologist.annotations.ExperimentalHorologistApi
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
-
-        setTheme(android.R.style.Theme_DeviceDefault)
 
         setContent {
             WearApp()

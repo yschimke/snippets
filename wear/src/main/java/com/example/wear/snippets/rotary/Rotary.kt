@@ -18,6 +18,7 @@ package com.example.wear.snippets.rotary
 
 import android.view.MotionEvent
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +48,8 @@ import androidx.wear.compose.foundation.ExperimentalWearFoundationApi
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.foundation.rememberActiveFocusRequester
+import androidx.wear.compose.foundation.rotary.RotaryScrollableBehavior
+import androidx.wear.compose.foundation.rotary.rotaryScrollable
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Picker
@@ -56,6 +59,7 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberPickerState
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import androidx.wear.compose.ui.tooling.preview.WearPreviewFontScales
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalWearFoundationApi::class)
@@ -70,21 +74,8 @@ fun ScrollableScreen() {
             PositionIndicator(scalingLazyListState = listState)
         }
     ) {
-
-        val focusRequester = rememberActiveFocusRequester()
-        val coroutineScope = rememberCoroutineScope()
-
         ScalingLazyColumn(
             modifier = Modifier
-                .onRotaryScrollEvent {
-                    coroutineScope.launch {
-                        listState.scrollBy(it.verticalScrollPixels)
-                        listState.animateScrollBy(0f)
-                    }
-                    true
-                }
-                .focusRequester(focusRequester)
-                .focusable()
                 .fillMaxSize(),
             state = listState
         ) {
@@ -110,7 +101,6 @@ fun TimePicker() {
     val hoursFocusRequester = remember { FocusRequester() }
     val minutesRequester = remember { FocusRequester() }
     // [START_EXCLUDE]
-    val coroutineScope = rememberCoroutineScope()
 
     @Composable
     fun Option(column: Int, text: String) = Box(modifier = Modifier.fillMaxSize()) {
@@ -147,14 +137,16 @@ fun TimePicker() {
             Picker(
                 readOnly = selectedColumn != 0,
                 modifier = Modifier.size(64.dp, 100.dp)
-                    .onRotaryScrollEvent {
-                        coroutineScope.launch {
-                            hourState.scrollBy(it.verticalScrollPixels)
+                    .rotaryScrollable(focusRequester = hoursFocusRequester, behavior = object : RotaryScrollableBehavior {
+                        override suspend fun CoroutineScope.performScroll(
+                            timestampMillis: Long,
+                            delta: Float,
+                            inputDeviceId: Int,
+                            orientation: Orientation
+                        ) {
+                            hourState.scrollBy(delta)
                         }
-                        true
-                    }
-                    .focusRequester(hoursFocusRequester)
-                    .focusable(),
+                    }),
                 onSelected = { selectedColumn = 0 },
                 // ...
                 // [START_EXCLUDE]
@@ -176,14 +168,16 @@ fun TimePicker() {
             Picker(
                 readOnly = selectedColumn != 1,
                 modifier = Modifier.size(64.dp, 100.dp)
-                    .onRotaryScrollEvent {
-                        coroutineScope.launch {
-                            minuteState.scrollBy(it.verticalScrollPixels)
+                    .rotaryScrollable(focusRequester = minutesRequester, behavior = object : RotaryScrollableBehavior {
+                        override suspend fun CoroutineScope.performScroll(
+                            timestampMillis: Long,
+                            delta: Float,
+                            inputDeviceId: Int,
+                            orientation: Orientation
+                        ) {
+                            minuteState.scrollBy(delta)
                         }
-                        true
-                    }
-                    .focusRequester(minutesRequester)
-                    .focusable(),
+                    }),
                 onSelected = { selectedColumn = 1 },
                 // ...
                 // [START_EXCLUDE]
